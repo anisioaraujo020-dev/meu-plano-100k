@@ -3,31 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta 100K</title>
+    <title>Meta 100K Diária</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .card { border: 2px solid #2ecc71; border-radius: 15px; padding: 20px; background: #111; max-width: 400px; margin: auto; }
         .progress-bg { background: #333; height: 35px; border-radius: 15px; margin: 15px 0; overflow: hidden; position: relative; }
         .progress-fill { background: #2ecc71; height: 100%; width: 0%; transition: 0.5s; }
         .percent-text { position: absolute; width: 100%; top: 8px; left: 0; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
-        .contador { font-size: 0.9em; color: #888; margin-bottom: 10px; }
-        .lista { height: 450px; overflow-y: auto; margin-top: 15px; text-align: left; }
-        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .info-box { background: #222; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9em; color: #aaa; }
+        .info-box b { color: #2ecc71; }
+        .lista { height: 400px; overflow-y: auto; margin-top: 15px; text-align: left; }
+        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; font-size: 18px; cursor: pointer; }
         .item:active { background: #1b3d21; }
         h1 { color: #2ecc71; font-size: 20px; margin-bottom: 5px; }
-        .aviso-vazio { padding: 40px; color: #888; font-style: italic; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>PROGRESSO META 100K</h1>
+        <h1>DESAFIO 100K DIÁRIO</h1>
         
         <div class="progress-bg">
             <div id="bar" class="progress-fill"></div>
             <div id="status" class="percent-text">0%</div>
         </div>
 
-        <div id="restantes" class="contador">Faltam 350 depósitos</div>
+        <div class="info-box">
+            Faltam <b id="restantes">350</b> depósitos<br>
+            Término previsto: <b id="data-fim">--/--/--</b>
+        </div>
 
         <div class="lista" id="lista"></div>
     </div>
@@ -35,8 +38,7 @@
     <script>
         const totalDepositos = 350;
         const valorInicial = 150;
-        // Recupera os IDs dos depósitos que já foram feitos e removidos
-        let realizados = JSON.parse(localStorage.getItem('meta_100k_limpa')) || [];
+        let realizados = JSON.parse(localStorage.getItem('meta_diaria_100k')) || [];
 
         function atualizar() {
             const listaDiv = document.getElementById('lista');
@@ -46,41 +48,39 @@
 
             for (let i = 0; i < totalDepositos; i++) {
                 let valor = valorInicial + i;
-                let jaFeito = realizados.includes(i);
-
-                if (jaFeito) {
+                if (realizados.includes(i)) {
                     acumuladoVal += valor;
                 } else {
                     countRestantes++;
-                    // Cria o item na lista apenas se NÃO foi feito
                     let div = document.createElement('div');
                     div.className = 'item';
-                    div.innerHTML = `<span>Depósito #${i+1}</span> <b>R$ ${valor},00</b>`;
-                    div.onclick = () => confirmarDeposito(i, valor);
+                    div.innerHTML = `<span>Dia #${i+1}</span> <b>R$ ${valor},00</b>`;
+                    div.onclick = () => confirmar(i, valor);
                     listaDiv.appendChild(div);
                 }
             }
 
-            // Se a lista estiver vazia
-            if (countRestantes === 0) {
-                listaDiv.innerHTML = '<div class="aviso-vazio">Parabéns! Você concluiu todos os depósitos!</div>';
-            }
+            // Cálculo da Data de Término
+            let hoje = new Date();
+            hoje.setDate(hoje.getDate() + countRestantes);
+            document.getElementById('data-fim').innerText = hoje.toLocaleDateString('pt-BR');
 
-            // Atualiza Porcentagem
+            // Atualiza Interface
             let p = (acumuladoVal / 100000 * 100).toFixed(2);
-            document.getElementById('bar').style.width = p + '%';
+            document.getElementById('bar').style.width = Math.min(p, 100) + '%';
             document.getElementById('status').innerHTML = p + '% Concluído';
-            document.getElementById('restantes').innerHTML = `Faltam ${countRestantes} depósitos`;
+            document.getElementById('restantes').innerHTML = countRestantes;
+            
+            if (countRestantes === 0) listaDiv.innerHTML = '<div style="padding:50px">MISSÃO CUMPRIDA! 🏆</div>';
         }
 
-        function confirmarDeposito(id, valor) {
-            if (confirm(`Confirmar depósito de R$ ${valor},00?\nEste item será removido da lista.`)) {
+        function confirmar(id, valor) {
+            if (confirm(`Confirmar depósito de hoje: R$ ${valor},00?`)) {
                 realizados.push(id);
-                localStorage.setItem('meta_100k_limpa', JSON.stringify(realizados));
+                localStorage.setItem('meta_diaria_100k', JSON.stringify(realizados));
                 atualizar();
             }
         }
-
         atualizar();
     </script>
 </body>
