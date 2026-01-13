@@ -7,45 +7,80 @@
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .card { border: 2px solid #2ecc71; border-radius: 15px; padding: 20px; background: #111; max-width: 400px; margin: auto; }
-        .progress-bg { background: #333; height: 25px; border-radius: 15px; margin: 15px 0; overflow: hidden; }
+        .progress-bg { background: #333; height: 35px; border-radius: 15px; margin: 15px 0; overflow: hidden; position: relative; }
         .progress-fill { background: #2ecc71; height: 100%; width: 0%; transition: 0.5s; }
-        .lista { height: 400px; overflow-y: auto; margin-top: 15px; text-align: left; }
-        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; font-size: 18px; }
-        .item.pago { background: #002b11; color: #2ecc71; text-decoration: line-through; }
+        .percent-text { position: absolute; width: 100%; top: 8px; left: 0; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+        .contador { font-size: 0.9em; color: #888; margin-bottom: 10px; }
+        .lista { height: 450px; overflow-y: auto; margin-top: 15px; text-align: left; }
+        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .item:active { background: #1b3d21; }
+        h1 { color: #2ecc71; font-size: 20px; margin-bottom: 5px; }
+        .aviso-vazio { padding: 40px; color: #888; font-style: italic; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>META 100 MIL</h1>
-        <div class="progress-bg"><div id="bar" class="progress-fill"></div></div>
-        <div id="status">Total: R$ 0,00</div>
+        <h1>PROGRESSO META 100K</h1>
+        
+        <div class="progress-bg">
+            <div id="bar" class="progress-fill"></div>
+            <div id="status" class="percent-text">0%</div>
+        </div>
+
+        <div id="restantes" class="contador">Faltam 350 depósitos</div>
+
         <div class="lista" id="lista"></div>
     </div>
+
     <script>
-        const total = 350, inicial = 150;
-        let salvos = JSON.parse(localStorage.getItem('meta_v4')) || [];
+        const totalDepositos = 350;
+        const valorInicial = 150;
+        // Recupera os IDs dos depósitos que já foram feitos e removidos
+        let realizados = JSON.parse(localStorage.getItem('meta_100k_limpa')) || [];
+
         function atualizar() {
-            const lista = document.getElementById('lista');
-            lista.innerHTML = ''; let acumulado = 0;
-            for (let i = 0; i < total; i++) {
-                let valor = inicial + i;
-                let check = salvos.includes(i);
-                if (check) acumulado += valor;
-                let div = document.createElement('div');
-                div.className = 'item' + (check ? ' pago' : '');
-                div.innerHTML = `<span>#${i+1}</span> <b>R$ ${valor},00</b>`;
-                div.onclick = () => {
-                    if (salvos.includes(i)) salvos = salvos.filter(id => id !== i);
-                    else salvos.push(i);
-                    localStorage.setItem('meta_v4', JSON.stringify(salvos));
-                    atualizar();
-                };
-                lista.appendChild(div);
+            const listaDiv = document.getElementById('lista');
+            listaDiv.innerHTML = ''; 
+            let acumuladoVal = 0;
+            let countRestantes = 0;
+
+            for (let i = 0; i < totalDepositos; i++) {
+                let valor = valorInicial + i;
+                let jaFeito = realizados.includes(i);
+
+                if (jaFeito) {
+                    acumuladoVal += valor;
+                } else {
+                    countRestantes++;
+                    // Cria o item na lista apenas se NÃO foi feito
+                    let div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<span>Depósito #${i+1}</span> <b>R$ ${valor},00</b>`;
+                    div.onclick = () => confirmarDeposito(i, valor);
+                    listaDiv.appendChild(div);
+                }
             }
-            let p = (acumulado / 100000 * 100).toFixed(2);
+
+            // Se a lista estiver vazia
+            if (countRestantes === 0) {
+                listaDiv.innerHTML = '<div class="aviso-vazio">Parabéns! Você concluiu todos os depósitos!</div>';
+            }
+
+            // Atualiza Porcentagem
+            let p = (acumuladoVal / 100000 * 100).toFixed(2);
             document.getElementById('bar').style.width = p + '%';
-            document.getElementById('status').innerHTML = `<b>Total: R$ ${acumulado.toLocaleString()}</b> (${p}%)`;
+            document.getElementById('status').innerHTML = p + '% Concluído';
+            document.getElementById('restantes').innerHTML = `Faltam ${countRestantes} depósitos`;
         }
+
+        function confirmarDeposito(id, valor) {
+            if (confirm(`Confirmar depósito de R$ ${valor},00?\nEste item será removido da lista.`)) {
+                realizados.push(id);
+                localStorage.setItem('meta_100k_limpa', JSON.stringify(realizados));
+                atualizar();
+            }
+        }
+
         atualizar();
     </script>
 </body>
