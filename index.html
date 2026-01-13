@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta 100K</title>
+    <style>
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
+        .card { border: 2px solid #2ecc71; border-radius: 15px; padding: 20px; background: #111; max-width: 400px; margin: auto; }
+        .progress-bg { background: #333; height: 25px; border-radius: 15px; margin: 15px 0; overflow: hidden; }
+        .progress-fill { background: #2ecc71; height: 100%; width: 0%; transition: 0.5s; }
+        .lista { height: 400px; overflow-y: auto; margin-top: 15px; text-align: left; }
+        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; font-size: 18px; }
+        .item.pago { background: #002b11; color: #2ecc71; text-decoration: line-through; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>META 100 MIL</h1>
+        <div class="progress-bg"><div id="bar" class="progress-fill"></div></div>
+        <div id="status">Total: R$ 0,00</div>
+        <div class="lista" id="lista"></div>
+    </div>
+    <script>
+        const total = 350, inicial = 150;
+        let salvos = JSON.parse(localStorage.getItem('meta_v4')) || [];
+        function atualizar() {
+            const lista = document.getElementById('lista');
+            lista.innerHTML = ''; let acumulado = 0;
+            for (let i = 0; i < total; i++) {
+                let valor = inicial + i;
+                let check = salvos.includes(i);
+                if (check) acumulado += valor;
+                let div = document.createElement('div');
+                div.className = 'item' + (check ? ' pago' : '');
+                div.innerHTML = `<span>#${i+1}</span> <b>R$ ${valor},00</b>`;
+                div.onclick = () => {
+                    if (salvos.includes(i)) salvos = salvos.filter(id => id !== i);
+                    else salvos.push(i);
+                    localStorage.setItem('meta_v4', JSON.stringify(salvos));
+                    atualizar();
+                };
+                lista.appendChild(div);
+            }
+            let p = (acumulado / 100000 * 100).toFixed(2);
+            document.getElementById('bar').style.width = p + '%';
+            document.getElementById('status').innerHTML = `<b>Total: R$ ${acumulado.toLocaleString()}</b> (${p}%)`;
+        }
+        atualizar();
+    </script>
+</body>
+</html>
